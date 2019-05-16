@@ -3,12 +3,67 @@
 <html>
 
     <head>
-        <meta charset='utf-8'>
+        
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=no' />
+
         <title>Label Master</title>
+
+        <!--Index CSS-->
+        <link rel='stylesheet' href='{{ url_for('static', filename='index.css') }}'>
+
+        <!--Bootstrap using CDN-->
+        <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css' integrity='sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T' crossorigin='anonymous'>
+
+        <!--Fontawsome Icons-->
+        <link href='https://use.fontawesome.com/releases/v5.6.1/css/all.css' rel='stylesheet'>
+
     </head>
 
     <body>
-        <h1>Yeework</h1>
+
+
+        <center>
+            
+            <form action method='POST'>
+                <h1>{{ text }}</h1>
+                <br>
+                <input name='idx' value='{{ idx }}' style='display: none'>
+                <br>
+                <h2>評分</h2>
+                <br>
+                <h3>
+                    <input type='radio' name='score' value='1'> 1
+                    <input type='radio' name='score' value='2'> 2
+                    <input type='radio' name='score' value='3' checked> 3
+                    <input type='radio' name='score' value='4'> 4
+                    <input type='radio' name='score' value='5'> 5
+                </h3>
+                <br>
+                <br>
+                <h2>單選Tag</h2><br>
+                <h1>
+                    <input type='radio' name='tag' value='happy'> 😀
+                    <input type='radio' name='tag' value='angry'> 😡
+                    <input type='radio' name='tag' value='wow' checked> 😲
+                    <input type='radio' name='tag' value='sad'> 😢
+                    <input type='radio' name='tag' value='none'> 😐
+                </h1>
+                <br>
+                <br>
+                <h2>自定義Tag</h2>
+                <br>
+                <h3>
+                <div name='tag_opts'>
+                    <input type='checkbox' name='tag_opt' value='Yooooo'>
+                </div>
+                </h3>
+                <br>
+                <br>
+                <input type='submit' value='submit'>
+            </form>
+        </center>
+
     </body>
 
 </html>
