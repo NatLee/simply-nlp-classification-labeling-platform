@@ -22,10 +22,13 @@
 
     <body>
 
-
         <center>
-            
+            <br>
+            <button onclick='location.href = "/upload"'>Upload Data</button>
+            <br>
+            <br>
             <form action method='POST'>
+                
                 <h1>{{ text }}</h1>
                 <br>
                 <input name='idx' value='{{ idx }}' style='display: none'>
@@ -55,15 +58,52 @@
                 <br>
                 <h3>
                 <div name='tag_opts'>
-                    <input type='checkbox' name='tag_opt' value='Yooooo'>
+                    {% for customTag in customTags %}
+                    <div><input type='checkbox' name='tag_opt' value={{ customTag }}> {{ customTag }}</div>
+                    {% endfor %}
                 </div>
                 </h3>
-                <br>
-                <br>
                 <input type='submit' value='submit'>
             </form>
+            <br>
+            <br>
+            <input type='text' name='addText' value=''>
+            <button onclick='addCheckbox()'> + </button> 
+            <button onclick='removeCheckbox()'> - </button>
+            <br>
+            <br>
         </center>
 
     </body>
+
+
+    <script>
+        function addCheckbox() {
+            var textBox = document.getElementsByName('addText')[0];
+            if(textBox.value != ''){
+                var divElement = document.createElement('div');
+                var tagOpts = document.getElementsByName('tag_opts')[0];
+                var cb = document.createElement('input');
+                cb.setAttribute('type', 'checkbox');
+                cb.setAttribute('value', textBox.value);
+                cb.setAttribute('checked', 'checked');
+                cb.setAttribute('name', 'tag_opt');
+                tagOpts.appendChild(divElement);
+                var nodeLength = tagOpts.childElementCount;
+                tagOpts.children[nodeLength-1].appendChild(cb);
+                var textNode = document.createTextNode(textBox.value);  
+                tagOpts.children[nodeLength-1].appendChild(textNode);
+                textBox.value = '';
+            }
+            
+        }
+        function removeCheckbox() {
+            var list = document.getElementsByName('tag_opts')[0];
+            var nodeLength = list.childElementCount;
+            if(nodeLength != 0){
+                list.removeChild(list.children[nodeLength-1]);
+            }
+        }
+    </script>
 
 </html>

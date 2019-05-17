@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 from random import randint
 
 class EmoLabel(object):
@@ -22,10 +23,17 @@ class EmoLabel(object):
         return
 
     def insertLabel(self, emotionId:int, score:int, tag:str, tag_opt:str):
-        self.__cur.execute('insert into label (emotionId, score, tag, tag_opt) values ("' + str(emotionId)      + ', ' +
-                     str(score)          + ', "' +
-                     tag.__repr__()      + '", "' +
-                     tag_opt.__repr__()  + '")')
+        date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        query = 'insert into label (emotionId, score, tag, tag_opt, updateDate) values (?, ?, ?, ?, ?)'
+        paras = (str(emotionId), str(score), str(tag), tag_opt.__repr__(), str(date))        
+        self.__cur.execute(query, paras)
+
+    def getUserCustomLabelById(self, emotionId:int) -> list:
+        results = self.__cur.execute('select tag_opt from label where emotionId =' + str(emotionId)).fetchall()
+        tagList = list()
+        for result in results:
+            tagList = tagList + eval(result[0])
+        return list(set(tagList))
 
     def getText(self) -> list:
         results = self.__cur.execute('select * from emotion').fetchall()
