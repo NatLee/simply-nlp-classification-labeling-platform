@@ -13,13 +13,20 @@ class EmoLabel(object):
         result = self.__cur.execute('select count(*) from emotion').fetchone()[0]
         return result
 
+    def refreashTextCounts(self):
+        self.__textCounts = self.__calTextCounts()
+
+
     def randomSampleText(self) -> (int, str, str):
         randomNumber = randint(1, self.__textCounts)
         idx, text, date = self.__cur.execute('select * from emotion where id=' + str(randomNumber)).fetchone()
         return idx, text, date
 
     def insertText(self, text:str):
-        self.__cur.execute('insert into emotion (text) values ("' + str(text) +'")')
+        date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        query = 'insert into emotion (text, date) values (?, ?)'
+        paras = (text, str(date))
+        self.__cur.execute(query, paras)
         return
 
     def insertLabel(self, emotionId:int, score:int, tag:str, tag_opt:str):

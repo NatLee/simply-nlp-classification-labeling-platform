@@ -3,11 +3,17 @@ from pathlib import Path
 from flask import Flask, render_template, request, send_from_directory, flash, redirect, url_for
 from werkzeug.utils import secure_filename
 
+from uuid import uuid1
+
 from EmoLabel import EmoLabel
 
 UPLOAD_FOLDER = Path('uploads')
 if not UPLOAD_FOLDER.is_dir():
     UPLOAD_FOLDER.mkdir()
+USER_UPLOAD_FOLDER = Path('uploads') / 'userUpload'
+if not USER_UPLOAD_FOLDER.is_dir():
+    USER_UPLOAD_FOLDER.mkdir()
+
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 
 app = Flask(__name__)
@@ -18,10 +24,70 @@ el = EmoLabel()
 def allowedFile(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
-@app.route('/uploads/<filename>')
+'''
+# route file path ***DANGER***
+@app.route('/upload/<filename>')
 def uploadedFile(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+'''
+
+
+
+
+'''
+def uploadLabelFile(fileSavePath:str):
+    # Insert labeled data to db.            
+    resultText = ''
+    detail = ''
+    with open(fileSavePath, 'r', encoding='utf-8') as f:
+        headPatterns = ['Level', 'Classes', 'Custom classes', 'Text']
+        headline = f.readline()
+        for pattern in headPatterns:
+            if headline.find(pattern) < 0:
+                resultText = 'Upload Fail'
+                detail = 'Please check the format. You can download the example.'
+                break
+        
+        for line in f.readlines():
+            idx
+            el.insertLabel(idx, score, tag, tag_opt)
+        
+    return resultText, detail
+'''
+
+
+def uploadTextDataFile(fileSavePath:str):
+    # Insert text data to db.            
+    resultText = ''
+    detail = ''
+    with open(fileSavePath, 'r', encoding='utf-8') as f:
+        headPatterns = ['Text']
+        headline = f.readline()
+        for pattern in headPatterns:
+            if headline.find(pattern) < 0:
+                resultText = 'Upload Fail'
+                detail = 'Please check the format. You can download the example.'
+                return resultText, detail
+        
+        try:
+            for line in f.readlines():
+                line = line.replace('\n', '')
+                if line == '':
+                    pass
+                else:
+                    el.insertText(line)
+            el.commit()
+            el.refreashTextCounts()
+            resultText = 'Upload Success'
+            detail = ': )'
+        except Exception as e:
+            resultText = 'Upload Fail'
+            detail = str(e)
+
+    return resultText, detail
+
+
+
 
 # http://flask.pocoo.org/docs/1.0/patterns/fileuploads/
 @app.route('/upload', methods=['POST', 'GET'])
@@ -39,12 +105,20 @@ def upload():
             return redirect(request.url)
         if file and allowedFile(file.filename):
             filename = secure_filename(file.filename)
-            fileSavePath = app.config['UPLOAD_FOLDER'] + '/' + filename
+            #fileSavePath = app.config['UPLOAD_FOLDER'] + '/' + filename
+            fileSavePath = USER_UPLOAD_FOLDER.absolute().as_posix() + '/' + uuid1().urn[9:] + '.txt'
             file.save(fileSavePath)
-            # TODO
-            # Insert data to db.
-            return redirect(url_for('uploadedFile', filename=filename))
+
+            resultText, detail = uploadTextDataFile(fileSavePath)
+            #return redirect(url_for('uploadedFile', filename=filename))
+            return render_template('uploadResult.html', resultText=resultText, detail=detail)
+
     return render_template('upload.html')
+
+@app.route('/upload/textDataExample.csv')
+def textDataExample():
+    return send_from_directory(app.config['UPLOAD_FOLDER'], 'textDataExample.csv')
+
 
 @app.route('/', methods=['POST', 'GET'])
 def index():

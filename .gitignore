@@ -9,4 +9,4 @@ __pycache__
 *.db
 *.db-journal
 
-uploads
+userUpload
