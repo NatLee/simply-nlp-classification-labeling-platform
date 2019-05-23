@@ -37,7 +37,7 @@ class EmoLabel(object):
 
     def insertText(self, text:str):
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        query = 'insert into emotion (text, date, flag) values (?, ?, ?)'
+        query = 'insert or ignore into emotion (text, date, flag) values (?, ?, ?)'
         paras = (text, str(date), 1)
         self.__cur.execute(query, paras)
         return
