@@ -33,7 +33,6 @@ def uploadedFile(filename):
 
 
 
-
 '''
 def uploadLabelFile(fileSavePath:str):
     # Insert labeled data to db.            
@@ -77,7 +76,7 @@ def uploadTextDataFile(fileSavePath:str):
                 else:
                     el.insertText(line)
             el.commit()
-            el.refreashTextCounts()
+            el.reloadTextIds()
             resultText = 'Upload Success'
             detail = ': )'
         except Exception as e:
@@ -85,8 +84,6 @@ def uploadTextDataFile(fileSavePath:str):
             detail = str(e)
 
     return resultText, detail
-
-
 
 
 # http://flask.pocoo.org/docs/1.0/patterns/fileuploads/
@@ -130,6 +127,8 @@ def index():
         score = int(request.form.get('score'))
         
         tag = str(request.form.get('tag'))
+
+        textType = str(request.form.get('type'))
         
         tag_opt = list()
         for item in eval(str(request.form)[19:-1]):
@@ -137,9 +136,9 @@ def index():
                 tag_opt.append(item[1])
 
         
-        el.insertLabel(idx, score, tag, tag_opt)
+        el.insertLabel(idx, score, tag, textType, tag_opt)
         el.commit()
-        print(idx, score, tag, tag_opt)
+        print(idx, score, tag, textType, tag_opt)
 
     idx, text, date = el.randomSampleText()
     customTags = el.getUserCustomLabelById(idx)

@@ -1,4 +1,24 @@
 # Labe Master
 
+```sql
+CREATE TABLE "emotion" (
+	"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+	"text"	INTEGER NOT NULL UNIQUE,
+	"date"	TEXT NOT NULL,
+	"flag"	INTEGER NOT NULL
+);
+
+
+CREATE TABLE "label" (
+	"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+	"emotionId"	INTEGER NOT NULL,
+	"score"	REAL NOT NULL,
+	"tag"	TEXT NOT NULL,
+	"type"	TEXT NOT NULL,
+	"tag_opt"	TEXT NOT NULL,
+	"updateDate"	TEXT NOT NULL
+);
+```
+
 
 `python main.py`
