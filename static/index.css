@@ -3,3 +3,10 @@
 h1 {
     color: navy;
 }
+
+.dashboard{
+    color: darkcyan;
+    position:absolute;
+    top:0;
+    right:0;
+}

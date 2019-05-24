@@ -145,10 +145,17 @@ def index():
         el.commit()
         print(idx, score, tag, textType, tag_opt)
 
+    coverRate, mean, std = el.dataDashboard()
     idx, text, date = el.randomSampleText()
     customTags = el.getUserCustomLabelById(idx)
 
-    return render_template('index.html', idx=idx, text=text, customTags=customTags)
+    return render_template('index.html', 
+                            idx=idx, 
+                            text=text, 
+                            customTags=customTags, 
+                            coverRate=coverRate,
+                            mean=mean, 
+                            std=std)
 
 
 if __name__ == '__main__':

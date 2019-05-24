@@ -60,8 +60,10 @@ class EmoLabel(object):
         '''
         Current votebox status(Mean, STD).
         '''
+        labeledTextCount = len(set(self.voteBox.keys()))
+        coverRate =  labeledTextCount / len(self.__displayTextIds)
         counter = np.asarray(list(self.voteBox.values()))
-        return (np.sum(counter)/len(counter), np.std(counter))
+        return (coverRate, np.sum(counter)/len(counter), np.std(counter))
 
     def __selectLogic(self, candidateID: list, scaleFactor=1) -> int:
         '''
@@ -73,7 +75,7 @@ class EmoLabel(object):
         #   FOR EVERY ENTRY e
         #   ticket count = (MAX(votes) - votes[e] + 1) * scale
         
-        tickets = []
+        tickets = list()
         maxVote = max(self.voteBox.values())
 
         for entryId in candidateID:
