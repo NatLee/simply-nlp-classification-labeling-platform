@@ -75,8 +75,13 @@ def uploadTextDataFile(fileSavePath:str):
                     pass
                 else:
                     el.insertText(line)
-            el.commit()
+
+            # Update hooks
+            el.commit()             # DB update
+            el.updateTicketNumber() # Votebox update
             el.reloadTextIds()
+            #
+
             resultText = 'Upload Success'
             detail = ': )'
         except Exception as e:
