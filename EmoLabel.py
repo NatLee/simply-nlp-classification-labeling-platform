@@ -1,4 +1,5 @@
 import sqlite3
+from collections import defaultdict
 from datetime import datetime
 from random import randint
 
@@ -8,10 +9,33 @@ class EmoLabel(object):
         self.__conn = sqlite3.connect(dbPath, check_same_thread=False)
         self.__cur = self.__conn.cursor()
         self.__displayTextIds = self.__calDisplayTextIds()
+        self.__updateTicketNumber()
 
     def reloadTextIds(self):
         self.__displayTextIds = self.__calDisplayTextIds()
         return
+
+
+    def __updateTicketNumber(self):
+
+        # Create votebox on first execute.
+        if not hasattr(self, 'voteBox'):
+            self.voteBox = dict()
+        
+        # Load all IDs from database.
+        
+        ids = self.__displayTextIds
+        
+        # Create a dict that holds the current count of all entries, returns 0 if entry doesn't exists.
+        currentVote = defaultdict(lambda: 0, 
+            self.__cur.execute(
+                'SELECT "emotionId", COUNT(*) FROM "label" GROUP BY "emotionId"'
+                ).fetchall())
+
+        # Update vote count of all IDs
+        for entry in ids:
+            self.voteBox[entry] = currentVote[entry]
+
 
     def __calDisplayTextIds(self) -> list:
         '''
