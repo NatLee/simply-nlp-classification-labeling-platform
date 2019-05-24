@@ -60,7 +60,12 @@ class EmoLabel(object):
         '''
         Current votebox status(Mean, STD).
         '''
-        labeledTextCount = len(set(self.voteBox.keys()))
+        unLabeledKeys = list()
+        for key, value in self.voteBox.items():
+            if value != 0:
+                unLabeledKeys.append(key)
+
+        labeledTextCount = len(set(unLabeledKeys))
         coverRate =  labeledTextCount / len(self.__displayTextIds)
         counter = np.asarray(list(self.voteBox.values()))
         return (coverRate, np.sum(counter)/len(counter), np.std(counter))

@@ -78,8 +78,8 @@ def uploadTextDataFile(fileSavePath:str):
 
             # Update hooks
             el.commit()             # DB update
-            el.updateTicketNumber() # Votebox update
             el.reloadTextIds()
+            el.updateTicketNumber() # Votebox update
             #
 
             resultText = 'Upload Success'
