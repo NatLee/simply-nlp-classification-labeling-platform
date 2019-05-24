@@ -1,7 +1,7 @@
 import sqlite3
 from collections import defaultdict
 from datetime import datetime
-from random import randint
+from random import randint, choice
 
 class EmoLabel(object):
 
@@ -46,18 +46,30 @@ class EmoLabel(object):
         return displayTextIds
 
     def randomSampleText(self, displayFlag:int=1) -> (int, str, str):
-        randomNumber = self.__selectLogic(len(self.__displayTextIds))
+        randomNumber = self.__selectLogic(self.__displayTextIds)
         selectIdx = self.__displayTextIds[randomNumber]
         query = 'select id, text, date from emotion where id=? and flag=?'
         paras = (str(selectIdx), str(displayFlag))
         idx, text, date = self.__cur.execute(query, paras).fetchone()
         return idx, text, date
 
-    def __selectLogic(self, length:int) -> int:
+    def __selectLogic(self, candidateID: list, scaleFactor=1) -> int:
         '''
-        Select logic here.
+        Weighted pick from list
         '''
-        return randint(1, length-1)
+
+        # Ticket weight rule:
+        #   LET vote as list of entries vote count 
+        #   FOR EVERY ENTRY e
+        #   ticket count = (MAX(votes) - votes[e] + 1) * scale
+        
+        tickets = []
+        maxVote = max(self.voteBox.values())
+
+        for entryId in candidateID:
+            tickets += [entryId] * int((maxVote - self.voteBox[entryId] + 1) * scaleFactor)
+            
+        return choice(tickets)
 
     def insertText(self, text:str):
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
