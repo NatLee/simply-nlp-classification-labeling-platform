@@ -46,8 +46,10 @@ class EmoLabel(object):
         return displayTextIds
 
     def randomSampleText(self, displayFlag:int=1) -> (int, str, str):
-        randomNumber = self.__selectLogic(self.__displayTextIds)
-        selectIdx = self.__displayTextIds[randomNumber]
+        '''
+        Random choose a test to label.
+        '''
+        selectIdx = self.__selectLogic(self.__displayTextIds)
         query = 'select id, text, date from emotion where id=? and flag=?'
         paras = (str(selectIdx), str(displayFlag))
         idx, text, date = self.__cur.execute(query, paras).fetchone()
