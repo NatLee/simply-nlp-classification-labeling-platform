@@ -53,8 +53,12 @@ class EmoLabel(object):
         selectIdx = self.__selectLogic(self.__displayTextIds)
         query = 'select id, text, date from emotion where id=? and flag=?'
         paras = (str(selectIdx), str(displayFlag))
-        idx, text, date = self.__cur.execute(query, paras).fetchone()
-        return idx, text, date
+        result = self.__cur.execute(query, paras).fetchone()
+        if result:
+            idx, text, date = self.__cur.execute(query, paras).fetchone()
+            return idx, text, date
+        else:
+            return None
 
     def dataDashboard(self):
         '''
@@ -66,9 +70,13 @@ class EmoLabel(object):
                 unLabeledKeys.append(key)
 
         labeledTextCount = len(set(unLabeledKeys))
-        coverRate =  labeledTextCount / len(self.__displayTextIds)
-        counter = np.asarray(list(self.voteBox.values()))
-        return (coverRate, np.sum(counter)/len(counter), np.std(counter))
+
+        if len(self.__displayTextIds) == 0:
+            return (0, 0, 0)
+        else:
+            coverRate =  labeledTextCount / len(self.__displayTextIds)
+            counter = np.asarray(list(self.voteBox.values()))
+            return (coverRate, np.sum(counter)/len(counter), np.std(counter))
 
     def __selectLogic(self, candidateID: list, scaleFactor=1) -> int:
         '''
@@ -81,12 +89,16 @@ class EmoLabel(object):
         #   ticket count = (MAX(votes) - votes[e] + 1) * scale
         
         tickets = list()
-        maxVote = max(self.voteBox.values())
 
-        for entryId in candidateID:
-            tickets += [entryId] * int((maxVote - self.voteBox[entryId] + 1) * scaleFactor)
-            
-        return choice(tickets)
+        if self.voteBox:
+            maxVote = max(self.voteBox.values())
+
+            for entryId in candidateID:
+                tickets += [entryId] * int((maxVote - self.voteBox[entryId] + 1) * scaleFactor)
+                
+            return choice(tickets)
+        else:
+            return []
 
     def insertText(self, text:str):
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

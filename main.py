@@ -1,6 +1,6 @@
 
 from pathlib import Path
-from flask import Flask, render_template, request, send_from_directory, flash, redirect, url_for
+from flask import Flask, render_template, request, send_from_directory, flash, redirect
 from werkzeug.utils import secure_filename
 
 from uuid import uuid1
@@ -146,8 +146,13 @@ def index():
         print(idx, score, tag, textType, tag_opt)
 
     coverRate, mean, std = el.dataDashboard()
-    idx, text, date = el.randomSampleText()
-    customTags = el.getUserCustomLabelById(idx)
+    randomSampleText = el.randomSampleText()
+    if randomSampleText:
+        idx, text, date = el.randomSampleText()
+        customTags = el.getUserCustomLabelById(idx)
+    else:
+        idx, text, date = 0, 'Null', '1900-01-01'
+        customTags = []
 
     return render_template('index.html', 
                             idx=idx, 
@@ -160,4 +165,8 @@ def index():
 
 if __name__ == '__main__':
 
-    app.run(host='0.0.0.0', port='8888', debug=True)
+    app.run(
+        host='0.0.0.0',
+        port='5000',
+        debug=True
+    )
