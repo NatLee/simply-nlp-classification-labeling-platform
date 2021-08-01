@@ -1,5 +1,10 @@
 # Labe Master
 
+
+## Database
+
+Use sqlite.
+
 ```sql
 CREATE TABLE "emotion" (
 	"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
@@ -19,6 +24,12 @@ CREATE TABLE "label" (
 	"updateDate"	TEXT NOT NULL
 );
 ```
-
+## Usage
 
 `python main.py`
+
+And, it will serve on `0.0.0.0:5000`
+
+## Page
+
+![](./doc/page.png)

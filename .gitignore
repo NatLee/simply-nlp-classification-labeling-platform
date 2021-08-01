@@ -5,7 +5,7 @@ desktop.ini
 __pycache__
 .vscode
 
-
+*.db
 *.db-journal
 
 userUpload
