@@ -2,129 +2,276 @@
 
 <html>
 
-    <head>
-        
-        <meta charset='UTF-8'>
-        <meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=no' />
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=no' />
+    <title>Label Master</title>
+    <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css'
+        integrity='sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T' crossorigin='anonymous'>
+    <link href='https://use.fontawesome.com/releases/v5.6.1/css/all.css' rel='stylesheet'>
+    <link rel='stylesheet' href='{{ url_for('static', filename='index.css') }}'>
+</head>
 
-        <title>Label Master</title>
+<body>
+    <div class="container">
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link{% if active_tab == 'home' %} active{% endif %}" href="#" onclick="openTab(event, 'home')">首頁</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if active_tab == 'upload' %} active{% endif %}" href="#" onclick="openTab(event, 'upload')">上傳頁面</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if active_tab == 'result' %} active{% endif %}" href="#" onclick="openTab(event, 'result')" style="display:none;">上傳結果</a>
+            </li>
+        </ul>
 
-        <!--Index CSS-->
-        <link rel='stylesheet' href='{{ url_for('static', filename='index.css') }}'>
+        <div id="toggleDashboardContainer">
+            <button id="toggleDashboard" onclick="toggleDashboard()">Labeling Coverage</button>
+            <div class='dashboard' style="display: none;">
+                <ul class="dashboard-info">
+                    <li>Cover Rate: {{ coverRate }}</li>
+                    <li>Mean: {{ mean }}</li>
+                    <li>STD: {{ std }}</li>
+                </ul>
+            </div>
+        </div>
 
-        <!--Bootstrap using CDN-->
-        <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css' integrity='sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T' crossorigin='anonymous'>
 
-        <!--Fontawsome Icons-->
-        <link href='https://use.fontawesome.com/releases/v5.6.1/css/all.css' rel='stylesheet'>
+        <div id="home" class="tab-content active">
+            <!-- 首頁的內容 -->
+            <div>
+                <center>
+                    <br>
+                    <br>
+                    <form action method='POST'>
 
-    </head>
+                        <div class="highlighted-text-container">
+                            <h2 class="highlighted-text">{{ text }}</h2>
+                        </div>
+                        <br>
+                        <input name='idx' value='{{ idx }}' style='display: none'>
+                        <br>
+                        <h2>評分</h2>
+                        <div class="score-slider">
+                          <input type="range" min="1" max="5" step="1" value="3" name="score">
+                          <div class="slider-tick">
+                            <span>1</span>
+                            <span>2</span>
+                            <span>3</span>
+                            <span>4</span>
+                            <span>5</span>
+                          </div>
+                        </div>
 
-    <body>
-        <div class='dashboard'><p>cover rate: {{ coverRate }}<br>
-                                  mean: {{ mean }}<br>
-                                  std: {{ std }}</p></div>
-        <center>
-            <br>
-            <button onclick='location.href = "/upload"'>Upload Data</button>
-            <br>
-            <br>
-            <form action method='POST'>
-                
-                <h1>{{ text }}</h1>
-                <br>
-                <input name='idx' value='{{ idx }}' style='display: none'>
-                <br>
-                <h2>評分</h2>
-                <br>
-                <h3>
-                    <input type='radio' name='score' value='1'> 1
-                    <input type='radio' name='score' value='2'> 2
-                    <input type='radio' name='score' value='3' checked> 3
-                    <input type='radio' name='score' value='4'> 4
-                    <input type='radio' name='score' value='5'> 5
-                </h3>
-                <br>
-                <br>
-                <h2>單選Sentiment Tag</h2><br>
-                <h1>
-                    <input type='radio' name='tag' value='happy'> happy😀
-                    <input type='radio' name='tag' value='angry'> angry😡
-                    <input type='radio' name='tag' value='wow' checked> wow😲
-                    <input type='radio' name='tag' value='sad'> sad😢
-                    <input type='radio' name='tag' value='none'> none😐
-                </h1>
-                <br>
-                <h2>單選Type</h2><br>
-                <h1>
-                    <input type='radio' name='type' value='日曆'> 日曆
-                    <input type='radio' name='type' value='其它' checked> 其它
-                    <input type='radio' name='type' value='導覽'> 導覽
-                    <input type='radio' name='type' value='問答'> 問答
-                    <input type='radio' name='type' value='輕應用'> 輕應用
-                    <input type='radio' name='type' value='媒體指令'> 媒體指令
-                    <input type='radio' name='type' value='閒聊'> 閒聊
-                    <input type='radio' name='type' value='人工客服'> 人工客服
-                    <input type='radio' name='type' value='天氣'> 天氣
-                    <input type='radio' name='type' value='導航'> 導航
-                    <input type='radio' name='type' value='接待'> 接待
-                    <input type='radio' name='type' value='驗證碼'> 驗證碼
-                    <input type='radio' name='type' value='引領'> 引領
-                    <input type='radio' name='type' value='註冊'> 註冊
-                    <input type='radio' name='type' value='通用指令'> 通用指令
-                </h1>
-                <br>
-                <br>
-                <h2>自定義Tag(opt.)</h2>
-                <br>
-                <h3>
-                <div name='tag_opts'>
-                    {% for customTag in customTags %}
-                    <div><input type='checkbox' name='tag_opt' value={{ customTag }}> {{ customTag }}</div>
-                    {% endfor %}
-                </div>
-                </h3>
-                <input type='submit' value='submit'>
-            </form>
-            <br>
-            <br>
-            <input type='text' name='addText' value=''>
-            <button onclick='addCheckbox()'> + </button> 
-            <button onclick='removeCheckbox()'> - </button>
-            <br>
-            <br>
-        </center>
+                        <br>
+                        <h2>情緒單選（Sentiment）</h2><br>
+                        <select name="tag" id="sentiment-select">
+                            <option value="happy">happy😀</option>
+                            <option value="angry">angry😡</option>
+                            <option value="wow" selected>wow😲</option>
+                            <option value="sad">sad😢</option>
+                            <option value="none">none😐</option>
+                        </select>
+                        <br>
+                        <br>
+                        <h2>類型選擇（Type）</h2>
+                        <select name="type">
+                          <option value="其它">其它</option>
+                          <option value="日曆">日曆</option>
+                          <option value="導覽">導覽</option>
+                          <option value="問答">問答</option>
+                          <option value="輕應用">輕應用</option>
+                          <option value="媒體指令">媒體指令</option>
+                          <option value="閒聊">閒聊</option>
+                          <option value="人工客服">人工客服</option>
+                          <option value="天氣">天氣</option>
+                          <option value="導航">導航</option>
+                          <option value="接待">接待</option>
+                          <option value="驗證碼">驗證碼</option>
+                          <option value="引領">引領</option>
+                          <option value="註冊">註冊</option>
+                          <option value="通用指令">通用指令</option>
+                        </select>
+                        <br>
+                        <br>
 
-    </body>
+                        <h2>自定義標籤（Optional）</h2>
+                        <br>
+                        <div class="add-custom-tag">
+                            <input type="text" name="addText" placeholder="Add a new tag...">
+                            <button type="button" onclick="addCheckbox()">Add</button>
+                            <button type="button" onclick="removeCheckbox()">Remove</button>
+                        </div>
+                        <br>
+                        <div class="custom-tags">
+                            {% for customTag in customTags %}
+                            <div class="custom-tag">
+                                <input type="checkbox" name="tag_opt" value="{{ customTag }}">
+                                <label>{{ customTag }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <br>
+                        <input type='submit' value='送出！' class='submit-button'>
+                    </form>
+                    <br>
+                    <br>
+                </center>
+            </div>
+        </div>
 
+        <div id="upload" class="tab-content" style="display:none;">
+            <!-- 上傳頁面的內容 -->
+            <div class="upload-page">
+                <center>
+                    <h1>上傳你想標註的資料！</h1>
+                    <form id='uploadForm' enctype='multipart/form-data'>
+                        <input type='file' name='file'>
+                        <input type='button' value='Upload' onclick="uploadFile()">
+                    </form>
+                    <br>
+                    <br>
+                    <a href='/upload/textDataExample.csv'>按我下載範本格式（.csv）</a>
+                    <br>
+                    <br>
+                    <h3>請按照下列表格的格式填寫！</h3>
+                    <br>
+                    <table border='1'>
+                        <tr>
+                            <td>
+                                <center>
+                                    <h4>Text</h4>
+                                </center>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <center>臺北市有希望了！ B-)</center>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <center>一群垃圾 幹</center>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <center>沒做功課就來討罵</center>
+                            </td>
+                        </tr>
+
+                    </table>
+
+                    <br>
+
+                    <h3>Sample Source from</h3>
+                    <a href='https://github.com/sweslo17/chinese_sentiment'>https://github.com/sweslo17/chinese_sentiment</a>
+
+                </center>
+                <br>
+                <br>
+            </div>
+            
+        </div>
+
+        <div id="result" class="tab-content" style="display:block;">
+            <!-- 上傳結果的內容 -->
+            <div>
+                <center>
+                    <h1 id="uploadResultText"></h1>
+                    <br>
+                    <h2 id="uploadResultDetail"></h2>
+                    <br>
+                </center>
+            </div>
+        </div>
+    </div>
 
     <script>
+
+        function toggleDashboard() {
+            var dashboard = document.querySelector('.dashboard');
+            var button = document.getElementById('toggleDashboard');
+            if (dashboard.style.display === 'none') {
+                dashboard.style.display = 'block';
+                button.classList.add('active');
+            } else {
+                dashboard.style.display = 'none';
+                button.classList.remove('active');
+            }
+        }
+
+
+        function openTab(evt, tabName) {
+            var i, tabContent, navLinks;
+            tabContent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabContent.length; i++) {
+                tabContent[i].style.display = "none";
+            }
+            navLinks = document.getElementsByClassName("nav-link");
+            for (i = 0; i < navLinks.length; i++) {
+                navLinks[i].className = navLinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            if (evt) {
+                evt.currentTarget.className += " active";
+            }
+        }
+
         function addCheckbox() {
             var textBox = document.getElementsByName('addText')[0];
-            if(textBox.value != ''){
+            if (textBox.value != '') {
                 var divElement = document.createElement('div');
-                var tagOpts = document.getElementsByName('tag_opts')[0];
+                var tagOpts = document.getElementsByClassName('custom-tags')[0];
                 var cb = document.createElement('input');
                 cb.setAttribute('type', 'checkbox');
                 cb.setAttribute('value', textBox.value);
                 cb.setAttribute('checked', 'checked');
                 cb.setAttribute('name', 'tag_opt');
+                var label = document.createElement('label');
+                label.textContent = textBox.value;
+                label.appendChild(cb);
+                divElement.appendChild(label);
                 tagOpts.appendChild(divElement);
-                var nodeLength = tagOpts.childElementCount;
-                tagOpts.children[nodeLength-1].appendChild(cb);
-                var textNode = document.createTextNode(textBox.value);  
-                tagOpts.children[nodeLength-1].appendChild(textNode);
                 textBox.value = '';
             }
-            
         }
+        
         function removeCheckbox() {
-            var list = document.getElementsByName('tag_opts')[0];
-            var nodeLength = list.childElementCount;
-            if(nodeLength != 0){
-                list.removeChild(list.children[nodeLength-1]);
+            var tagOpts = document.getElementsByClassName('custom-tags')[0];
+            var checkboxes = tagOpts.querySelectorAll('input[type="checkbox"]');
+            var lastCheckbox = checkboxes[checkboxes.length - 1];
+            if (lastCheckbox) {
+              lastCheckbox.closest('div').parentNode.removeChild(lastCheckbox.closest('div'));
             }
+          }
+
+        function uploadFile() {
+            var formData = new FormData(document.getElementById('uploadForm'));
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload', true);
+        
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.resultText && response.detail) {
+                        document.getElementById('uploadResultText').textContent = response.resultText;
+                        document.getElementById('uploadResultDetail').textContent = response.detail;
+                        
+                        if (response.resultText === 'Upload Success') {
+                            // 跳轉到 "Upload Result" 標籤
+                            openTab(null, 'result');
+                        }
+                    }
+                }
+            };
+        
+            xhr.send(formData);
         }
+
     </script>
+
+</body>
 
 </html>
