@@ -79,7 +79,7 @@ export function AiPanel({ project, ai, suggestion, values, busy, onGenerate, onF
         <div className="rounded-xl border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
           <p>設定環境變數後，模型會先給分數、類別和理由，你按接受或修改就好。</p>
           <pre className="mt-3 overflow-x-auto rounded-lg bg-zinc-100 p-2.5 text-[11px] leading-relaxed text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-            {"LLM_PROVIDER=anthropic\nANTHROPIC_API_KEY=…\n\n# 或 Ollama 等 OpenAI 相容服務\nLLM_PROVIDER=openai\nOPENAI_BASE_URL=http://ollama:11434/v1\nOPENAI_MODEL=qwen3-vl:2b"}
+            {"LLM_PROVIDER=anthropic\nANTHROPIC_API_KEY=…\n\n# 或 Ollama 等 OpenAI 相容服務\nLLM_PROVIDER=openai\nOPENAI_BASE_URL=http://ollama:11434/v1\nOPENAI_MODEL=qwen3-vl:2b-instruct"}
           </pre>
           {ai && !ai.enabled && ai.reason && <p className="mt-2 text-xs">目前：{ai.reason}</p>}
         </div>

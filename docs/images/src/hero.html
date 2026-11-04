@@ -1,0 +1,135 @@
+<!doctype html>
+<!--
+  README 封面。用 Chromium 系的瀏覽器輸出淺色和深色兩張（#dark 是深色），例如：
+    msedge --headless=new --hide-scrollbars --force-device-scale-factor=2 --window-size=960,400
+           --default-background-color=00000000 --virtual-time-budget=5000
+           --screenshot=hero-dark.png "file:///…/hero.html#dark"
+  圖上的名稱都對照過程式：匯入格式（src/api/src/import.rs）、AI 服務（src/api/src/llm/）、
+  快捷鍵（src/web/src/components/AiPanel.tsx）、匯出格式（src/api/src/export.rs）、啟動指令（README）。
+-->
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<title>Simply Label banner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=block" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f4f4f5; --ink: #18181b; --muted: #52525b; --line: #e4e4e7; --card: #ffffff;
+    --brand: #0d9488; --brand2: #14b8a6; --brandbg: #f0fdfa; --ai: #f59e0b; --aibg: #fffbeb;
+    --shadow: 0 1px 2px rgba(24,24,27,.05), 0 10px 24px -12px rgba(24,24,27,.18);
+    --tint1: rgba(20,184,166,.14); --tint2: rgba(245,158,11,.08); --wire: #a1a1aa;
+  }
+  .dark {
+    --bg: #09090b; --bg2: #18181b; --ink: #fafafa; --muted: #a1a1aa; --line: #3f3f46; --card: #18181b;
+    --brand: #2dd4bf; --brand2: #5eead4; --brandbg: #042f2e; --ai: #fbbf24; --aibg: #2a1d05;
+    --shadow: 0 1px 2px rgba(0,0,0,.5), 0 10px 28px -10px rgba(0,0,0,.6);
+    --tint1: rgba(45,212,191,.16); --tint2: rgba(251,191,36,.08); --wire: #71717a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: transparent; }
+  body { width: 960px; height: 400px; font-family: Inter, "Noto Sans TC", "Microsoft JhengHei", sans-serif; color: var(--ink); }
+  .frame { position: relative; width: 960px; height: 400px; border-radius: 22px; overflow: hidden; border: 1px solid var(--line);
+           background: radial-gradient(560px 320px at 95% 0%, var(--tint1), transparent 70%),
+                       radial-gradient(420px 260px at 0% 100%, var(--tint2), transparent 70%), var(--bg); }
+  .dots { position: absolute; inset: 0; opacity: .6; background-image: radial-gradient(var(--line) 1px, transparent 1.2px);
+          background-size: 22px 22px; -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 60%); }
+
+  header { position: absolute; left: 44px; top: 40px; display: flex; align-items: center; gap: 18px; }
+  .mark { width: 60px; height: 60px; border-radius: 17px; background: linear-gradient(140deg, #2dd4bf, #0f766e);
+          display: grid; place-items: center; box-shadow: var(--shadow); }
+  h1 { margin: 0; font-size: 44px; font-weight: 800; letter-spacing: -0.035em; line-height: 1; }
+  h1 small { font-size: 22px; font-weight: 700; letter-spacing: 0; margin-left: 12px; color: var(--brand); }
+  .tag { margin: 10px 0 0; font-size: 17px; color: var(--muted); }
+  .tag b { color: var(--ink); font-weight: 700; }
+  .cmd { position: absolute; right: 44px; top: 46px; font-family: "JetBrains Mono", Consolas, monospace; font-size: 13.5px;
+         padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); box-shadow: var(--shadow); }
+  .cmd span { color: var(--muted); margin-right: 8px; }
+
+  .node { position: absolute; top: 178px; width: 196px; height: 176px; background: var(--card); border: 1px solid var(--line);
+          border-radius: 16px; box-shadow: var(--shadow); padding: 15px 16px; }
+  .label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+           display: flex; align-items: center; gap: 8px; }
+  .label i { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
+  .title { font-size: 18px; font-weight: 700; margin-top: 9px; letter-spacing: -0.01em; }
+  .sub { font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.55; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .chip { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); white-space: nowrap; }
+  .chip.brand { border-color: transparent; background: var(--brandbg); color: var(--brand); font-weight: 600; }
+  kbd { font-family: "JetBrains Mono", Consolas, monospace; font-size: 11px; padding: 1px 6px; border-radius: 5px;
+        border: 1px solid var(--line); background: var(--bg2); color: var(--muted); }
+
+  #n1 { left: 44px; }
+  #n2 { left: 274px; border-color: color-mix(in srgb, var(--ai) 55%, var(--line)); background: linear-gradient(180deg, var(--aibg), var(--card) 70%); }
+  #n2 .label i { background: var(--ai); }
+  #n3 { left: 504px; }
+  #n4 { left: 734px; width: 182px; }
+  .meter { height: 7px; border-radius: 99px; background: color-mix(in srgb, var(--ai) 22%, transparent); margin-top: 10px; overflow: hidden; }
+  .meter div { width: 83%; height: 100%; border-radius: 99px; background: var(--ai); }
+  .conf { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+  .conf b { color: var(--ink); }
+  .opts { display: flex; gap: 5px; margin-top: 11px; }
+  .opt { flex: 1; text-align: center; font-size: 12px; padding: 5px 0; border-radius: 9px; border: 1px solid var(--line); }
+  .opt.on { border-color: var(--brand); background: var(--brandbg); color: var(--brand); font-weight: 700; box-shadow: 0 0 0 1px var(--brand) inset; }
+  .keys { font-size: 12px; color: var(--muted); margin-top: 11px; display: flex; gap: 10px; align-items: center; }
+
+  svg.wires { position: absolute; inset: 0; }
+  .wire { fill: none; stroke: var(--wire); stroke-width: 2; stroke-dasharray: 5 6; }
+  .head { fill: var(--wire); }
+</style>
+</head>
+<body>
+<script>if (location.hash === '#dark') document.documentElement.className = 'dark';</script>
+<div class="frame">
+  <div class="dots"></div>
+  <header>
+    <div class="mark">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/>
+        <circle cx="7.5" cy="7.5" r="1.4" fill="#fff" stroke="none"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Simply Label<small>分類標注平台</small></h1>
+      <p class="tag">文字、圖片、文字加圖片都能標。<b>模型先給分數和類別</b>，人按接受或修改。</p>
+    </div>
+  </header>
+  <div class="cmd"><span>$</span>docker compose up -d --build</div>
+
+  <svg class="wires" width="960" height="400">
+    <path class="wire" d="M242 266 H266"/><path class="head" d="M272 266 l-9 -5 v10 z"/>
+    <path class="wire" d="M472 266 H496"/><path class="head" d="M502 266 l-9 -5 v10 z"/>
+    <path class="wire" d="M702 266 H726"/><path class="head" d="M732 266 l-9 -5 v10 z"/>
+  </svg>
+
+  <div class="node" id="n1">
+    <div class="label"><i></i>匯入</div>
+    <div class="title">你的資料</div>
+    <div class="sub">文字、圖片、音訊；舊版 emoLabel.db 也能直接匯入</div>
+    <div class="chips"><span class="chip">CSV</span><span class="chip">JSONL</span><span class="chip">zip</span></div>
+  </div>
+
+  <div class="node" id="n2">
+    <div class="label"><i></i>AI 建議</div>
+    <div class="title">分數＋類別＋理由</div>
+    <div class="meter"><div></div></div>
+    <div class="conf"><span>模型自評信心</span><b>83%</b></div>
+    <div class="chips"><span class="chip">Claude API</span><span class="chip">OpenAI 相容</span></div>
+  </div>
+
+  <div class="node" id="n3">
+    <div class="label"><i></i>人確認</div>
+    <div class="title">鍵盤就能標</div>
+    <div class="opts"><span class="opt">1</span><span class="opt">2</span><span class="opt on">3</span><span class="opt">4</span><span class="opt">5</span></div>
+    <div class="keys"><span><kbd>A</kbd> 接受</span><span><kbd>Enter</kbd> 送出</span></div>
+  </div>
+
+  <div class="node" id="n4">
+    <div class="label"><i></i>匯出</div>
+    <div class="title">訓練、評估</div>
+    <div class="sub">過半數共識、Fleiss' kappa 一致性</div>
+    <div class="chips"><span class="chip">CSV</span><span class="chip">JSONL</span><span class="chip brand">微調用聊天格式</span></div>
+  </div>
+</div>
+</body>
+</html>
