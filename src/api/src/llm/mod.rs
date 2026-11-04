@@ -65,7 +65,12 @@ impl std::fmt::Display for LlmError {
             Self::Http { status, message } => write!(f, "AI 服務回傳錯誤 {status}：{message}"),
             Self::Network(m) => write!(f, "連不上 AI 服務：{m}"),
             Self::Refusal(m) => write!(f, "模型拒絕回答：{m}"),
-            Self::Truncated => write!(f, "模型的回答太長被截斷"),
+            // 推理型模型的思考也算在上下文裡，Ollama 預設只有 4096（見 docs/pitfalls.md）
+            Self::Truncated => write!(
+                f,
+                "模型的回答太長被截斷。推理型模型的思考也會用掉上下文：\
+                 換成不思考的模型，或調大上下文長度（Ollama 是 OLLAMA_CONTEXT_LENGTH）"
+            ),
             Self::InvalidJson(m) => write!(f, "模型的回答不是有效的 JSON：{m}"),
         }
     }
