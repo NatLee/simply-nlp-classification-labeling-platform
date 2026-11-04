@@ -1,5 +1,6 @@
 //! HTTP API（規格見 `docs/api.md`）與前端靜態檔。
 
+mod account;
 mod annotators;
 mod items;
 mod projects;
@@ -7,6 +8,7 @@ mod projects;
 use axum::{
     extract::{DefaultBodyLimit, State},
     http::{header, HeaderValue},
+    middleware::from_fn_with_state,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -17,13 +19,18 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-use crate::{error::AppError, schema, state::AppState};
+use crate::{auth, error::AppError, schema, state::AppState};
 
 pub fn router(state: AppState) -> Router {
     let upload_limit = DefaultBodyLimit::max(state.config.max_upload_bytes);
     let api = Router::new()
         .route("/health", get(|| async { "ok" }))
         .route("/meta", get(meta))
+        .route("/auth/me", get(account::me))
+        .route("/auth/login", post(account::login))
+        .route("/auth/logout", post(account::logout))
+        .route("/users", get(account::list_users).post(account::create_user))
+        .route("/users/{id}", put(account::update_user))
         .route("/templates", get(|| async { Json(schema::templates()) }))
         .route("/samples/{name}", get(projects::sample))
         .route("/projects", get(projects::list).post(projects::create))
@@ -52,7 +59,9 @@ pub fn router(state: AppState) -> Router {
         .route("/media/{id}", get(items::media))
         .route("/annotators", get(annotators::list).post(annotators::create))
         .route("/annotators/{id}", put(annotators::rename).delete(annotators::remove))
-        .fallback(|| async { AppError::not_found("找不到這個 API") });
+        .fallback(|| async { AppError::not_found("找不到這個 API") })
+        // 登入、角色、同源檢查（沒啟用登入時直接放行）；權限表在 auth::required_level
+        .layer(from_fn_with_state(state.clone(), auth::guard));
 
     // 前端是單頁應用：找不到的路徑一律回 index.html，交給前端路由。
     let static_dir = state.config.static_dir.clone();
@@ -83,6 +92,7 @@ async fn meta(State(state): State<AppState>) -> Json<Value> {
         "version": env!("CARGO_PKG_VERSION"),
         "ai": ai_status(&state),
         "maxUploadMb": state.config.max_upload_bytes / 1024 / 1024,
+        "auth": { "enabled": state.config.auth.is_some() },
     }))
 }
 

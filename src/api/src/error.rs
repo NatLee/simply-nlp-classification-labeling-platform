@@ -9,6 +9,11 @@ use serde_json::json;
 #[derive(Debug)]
 pub enum AppError {
     BadRequest(String, Vec<String>),
+    /// 沒有登入（啟用內建登入時）。
+    Unauthorized(String),
+    /// 登入了，但帳號的角色不夠。
+    Forbidden(String),
+    TooManyRequests(String),
     NotFound(String),
     Conflict(String),
     PayloadTooLarge(String),
@@ -37,6 +42,9 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, msg, details) = match self {
             AppError::BadRequest(m, d) => (StatusCode::BAD_REQUEST, m, d),
+            AppError::Unauthorized(m) => (StatusCode::UNAUTHORIZED, m, vec![]),
+            AppError::Forbidden(m) => (StatusCode::FORBIDDEN, m, vec![]),
+            AppError::TooManyRequests(m) => (StatusCode::TOO_MANY_REQUESTS, m, vec![]),
             AppError::NotFound(m) => (StatusCode::NOT_FOUND, m, vec![]),
             AppError::Conflict(m) => (StatusCode::CONFLICT, m, vec![]),
             AppError::PayloadTooLarge(m) => (StatusCode::PAYLOAD_TOO_LARGE, m, vec![]),

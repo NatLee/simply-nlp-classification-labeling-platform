@@ -41,6 +41,8 @@ fn config(dir: &Path, provider: Option<ProviderConfig>) -> Config {
             timeout: Duration::from_secs(10),
             concurrency: 2,
         },
+        // 登入的測試在 tests/auth.rs
+        auth: None,
     }
 }
 

@@ -23,6 +23,72 @@ pub struct Config {
     pub static_dir: PathBuf,
     pub max_upload_bytes: usize,
     pub llm: LlmSettings,
+    /// 內建登入；沒設定 `ADMIN_PASSWORD` 時是 None，所有人都不用登入（和舊版一樣）。
+    pub auth: Option<AuthConfig>,
+}
+
+/// 內建登入的設定。環境變數的名稱和閱讀理解標注平台一樣。
+#[derive(Clone)]
+pub struct AuthConfig {
+    pub admin_username: String,
+    pub admin_password: String,
+    /// `PUBLIC_URL` 的來源（scheme://host[:port]），檢查寫入請求的 Origin 用。
+    pub public_origin: Option<String>,
+    /// session cookie 要不要加 Secure：`COOKIE_SECURE` 有設就照它，否則看 `PUBLIC_URL` 是不是 https。
+    pub cookie_secure: bool,
+}
+
+/// 不把管理員密碼印進 log。
+impl std::fmt::Debug for AuthConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AuthConfig")
+            .field("admin_username", &self.admin_username)
+            .field("public_origin", &self.public_origin)
+            .field("cookie_secure", &self.cookie_secure)
+            .finish_non_exhaustive()
+    }
+}
+
+/// 管理員密碼至少幾個字元（和帳號管理裡新增帳號的規則一樣）。
+pub const MIN_PASSWORD_CHARS: usize = 8;
+pub const DEFAULT_ADMIN_USERNAME: &str = "admin";
+
+impl AuthConfig {
+    fn from_lookup(var: &impl Fn(&str) -> Option<String>) -> Result<Option<Self>> {
+        let Some(admin_password) = var("ADMIN_PASSWORD") else {
+            return Ok(None);
+        };
+        if admin_password.chars().count() < MIN_PASSWORD_CHARS {
+            bail!("ADMIN_PASSWORD 至少要 {MIN_PASSWORD_CHARS} 個字元");
+        }
+        let public_url = var("PUBLIC_URL");
+        let public_origin = public_url.as_deref().map(origin_of).transpose()?;
+        let cookie_secure = match var("COOKIE_SECURE") {
+            Some(v) => matches!(v.to_lowercase().as_str(), "1" | "true" | "yes"),
+            None => public_url.as_deref().is_some_and(|u| u.starts_with("https://")),
+        };
+        Ok(Some(Self {
+            admin_username: var("ADMIN_USERNAME").unwrap_or_else(|| DEFAULT_ADMIN_USERNAME.into()),
+            admin_password,
+            public_origin,
+            cookie_secure,
+        }))
+    }
+}
+
+/// `https://label.example.com/app/` → `https://label.example.com`
+fn origin_of(url: &str) -> Result<String> {
+    let (scheme, rest) = url
+        .split_once("://")
+        .with_context(|| format!("PUBLIC_URL 要有 http:// 或 https://：{url}"))?;
+    if scheme != "http" && scheme != "https" {
+        bail!("PUBLIC_URL 要是 http 或 https：{url}");
+    }
+    let host = rest.split('/').next().unwrap_or_default();
+    if host.is_empty() {
+        bail!("PUBLIC_URL 少了主機名稱：{url}");
+    }
+    Ok(format!("{scheme}://{}", host.to_lowercase()))
 }
 
 /// AI 輔助標注的設定。`provider` 是 None 時 AI 功能關閉，`disabled_reason` 說明原因。
@@ -125,6 +191,7 @@ impl Config {
             static_dir: PathBuf::from(var("LABEL_STATIC_DIR").unwrap_or_else(|| "src/web/dist".into())),
             max_upload_bytes: usize::try_from(max_upload_mb * 1024 * 1024).context("LABEL_MAX_UPLOAD_MB 太大")?,
             llm: LlmSettings::from_lookup(&var)?,
+            auth: AuthConfig::from_lookup(&var)?,
         })
     }
 
@@ -248,6 +315,39 @@ mod tests {
         let p = c.llm.provider.unwrap();
         assert_eq!(p.base_url(), "http://ollama:11434/v1");
         assert!(matches!(p, ProviderConfig::OpenAi { api_key: None, .. }));
+    }
+
+    #[test]
+    fn login_is_off_unless_admin_password_is_set() {
+        assert!(config(&[]).unwrap().auth.is_none());
+        let a = config(&[("ADMIN_PASSWORD", "correct horse")]).unwrap().auth.unwrap();
+        assert_eq!(a.admin_username, DEFAULT_ADMIN_USERNAME);
+        assert!(!a.cookie_secure);
+        assert!(!format!("{a:?}").contains("correct horse"));
+        assert!(config(&[("ADMIN_PASSWORD", "short")]).is_err());
+    }
+
+    #[test]
+    fn public_url_sets_origin_and_secure_cookie() {
+        let a = config(&[
+            ("ADMIN_PASSWORD", "12345678"),
+            ("PUBLIC_URL", "https://Label.Example.com/app/"),
+        ])
+        .unwrap()
+        .auth
+        .unwrap();
+        assert_eq!(a.public_origin.as_deref(), Some("https://label.example.com"));
+        assert!(a.cookie_secure);
+        let a = config(&[
+            ("ADMIN_PASSWORD", "12345678"),
+            ("PUBLIC_URL", "https://x.test"),
+            ("COOKIE_SECURE", "false"),
+        ])
+        .unwrap()
+        .auth
+        .unwrap();
+        assert!(!a.cookie_secure, "COOKIE_SECURE overrides PUBLIC_URL");
+        assert!(config(&[("ADMIN_PASSWORD", "12345678"), ("PUBLIC_URL", "label.example.com")]).is_err());
     }
 
     #[test]

@@ -9,6 +9,7 @@ use serde_json::{json, Value};
 
 use crate::{
     ai,
+    auth::Viewer,
     db::now,
     error::{AppError, AppResult},
     export, import, legacy, media,
@@ -277,14 +278,16 @@ pub struct NextQuery {
 
 pub async fn next(
     State(state): State<AppState>,
+    viewer: Viewer,
     Path(id): Path<i64>,
     Query(q): Query<NextQuery>,
 ) -> AppResult<Json<Value>> {
+    let annotator = viewer.annotator(q.annotator)?;
     models::get_project(&state.db, id).await?;
-    models::get_annotator(&state.db, q.annotator).await?;
+    models::get_annotator(&state.db, annotator).await?;
     let exclude: Vec<i64> = q.exclude.split(',').filter_map(|s| s.trim().parse().ok()).collect();
     Ok(Json(
-        json!({ "itemId": stats::next_item(&state.db, id, q.annotator, &exclude).await? }),
+        json!({ "itemId": stats::next_item(&state.db, id, annotator, &exclude).await? }),
     ))
 }
 

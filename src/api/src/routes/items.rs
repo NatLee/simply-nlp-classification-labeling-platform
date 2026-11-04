@@ -14,6 +14,7 @@ use tower_http::services::ServeFile;
 
 use crate::{
     ai,
+    auth::{Level, Viewer},
     db::now,
     error::{AppError, AppResult},
     models::{self, Annotation, Source},
@@ -126,12 +127,14 @@ pub struct SaveAnnotation {
 /// 新增或更新目前標注者對這筆資料的標注（每人每筆一份）。
 pub async fn save_annotation(
     State(state): State<AppState>,
+    viewer: Viewer,
     Path(id): Path<i64>,
     Json(req): Json<SaveAnnotation>,
 ) -> AppResult<Json<Annotation>> {
+    let annotator_id = viewer.annotator(req.annotator_id)?;
     let item = models::get_item(&state.db, id).await?;
     let project = models::get_project(&state.db, item.project_id).await?;
-    let annotator = models::get_annotator(&state.db, req.annotator_id).await?;
+    let annotator = models::get_annotator(&state.db, annotator_id).await?;
     if annotator.kind != "human" {
         return Err(AppError::bad("AI 標注者的標注只能由批次預標產生"));
     }
@@ -162,7 +165,7 @@ pub async fn save_annotation(
          RETURNING id",
     )
     .bind(id)
-    .bind(req.annotator_id)
+    .bind(annotator_id)
     .bind(serde_json::to_string(&values)?)
     .bind(source.as_str())
     .bind(req.suggestion_id)
@@ -176,8 +179,18 @@ pub async fn save_annotation(
     Ok(Json(models::get_annotation(&state.db, annotation_id).await?))
 }
 
-pub async fn delete_annotation(State(state): State<AppState>, Path(id): Path<i64>) -> AppResult<StatusCode> {
-    models::get_annotation(&state.db, id).await?;
+/// 登入後只能刪自己的標注；reviewer 和 admin 可以刪別人的。
+pub async fn delete_annotation(
+    State(state): State<AppState>,
+    viewer: Viewer,
+    Path(id): Path<i64>,
+) -> AppResult<StatusCode> {
+    let a = models::get_annotation(&state.db, id).await?;
+    if let Some(u) = &viewer.0 {
+        if a.annotator_id != Some(u.annotator_id) && !viewer.at_least(Level::Review) {
+            return Err(AppError::Forbidden("只能刪自己的標注".into()));
+        }
+    }
     sqlx::query("DELETE FROM annotations WHERE id = ?")
         .bind(id)
         .execute(&state.db)
