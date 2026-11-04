@@ -3,6 +3,7 @@ name = "simply-nlp-labeling"
 version = "2.0.0"
 edition = "2021"
 description = "Self-hosted multimodal classification labeling platform with AI-assisted pre-labeling"
+license = "MIT"
 publish = false
 
 [lib]
