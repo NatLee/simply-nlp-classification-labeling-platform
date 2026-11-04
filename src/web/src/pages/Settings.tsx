@@ -10,6 +10,10 @@ import type { AiSettings, Choice, Field, FieldType, Schema } from "../types";
 import { useProject } from "./ProjectLayout";
 
 const TYPES: FieldType[] = ["scale", "single", "multi", "tags", "text"];
+/** 打開「自動接受」時先帶入的門檻。 */
+const DEFAULT_AUTO_ACCEPT = 0.9;
+/** 門檻滑桿的範圍：低於一半信心的建議不適合自動接受。 */
+const THRESHOLD_MIN = 0.5;
 
 function NumberInput({ label, value, onChange, step = "any" }: { label: string; value: number | null | undefined; onChange: (v: number | null) => void; step?: string }) {
   return (
@@ -331,7 +335,7 @@ export function SettingsPage() {
                 type="checkbox"
                 className="accent-brand-600"
                 checked={ai.autoAcceptThreshold != null}
-                onChange={(e) => setAi({ ...ai, autoAcceptThreshold: e.target.checked ? 0.9 : null })}
+                onChange={(e) => setAi({ ...ai, autoAcceptThreshold: e.target.checked ? DEFAULT_AUTO_ACCEPT : null })}
               />
               批次預標時，高信心的建議直接存成標注
             </label>
@@ -344,12 +348,12 @@ export function SettingsPage() {
                 <input
                   type="range"
                   className="slider"
-                  min={0.5}
+                  min={THRESHOLD_MIN}
                   max={1}
                   step={0.01}
                   value={ai.autoAcceptThreshold}
                   aria-label="自動接受門檻"
-                  style={{ ["--fill" as string]: `${((ai.autoAcceptThreshold - 0.5) / 0.5) * 100}%` }}
+                  style={{ ["--fill" as string]: `${((ai.autoAcceptThreshold - THRESHOLD_MIN) / (1 - THRESHOLD_MIN)) * 100}%` }}
                   onChange={(e) => setAi({ ...ai, autoAcceptThreshold: Number(e.target.value) })}
                 />
                 <p className="hint">信心是模型自己估的，不一定準。建議先抽一些自動接受的資料人工檢查，或在統計頁看 AI 和人的一致性。</p>

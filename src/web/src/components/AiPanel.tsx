@@ -12,9 +12,16 @@ const STATUS_TEXT: Record<Suggestion["status"], string> = {
   auto: "高信心，已自動接受",
 };
 
+/** 信心的「高／中／低」分界，只影響顯示，不影響自動接受（那是專案設定的門檻）。 */
+const CONFIDENCE_LEVELS: [number, string][] = [
+  [0.85, "高"],
+  [0.6, "中"],
+  [0, "低"],
+];
+
 export function ConfidenceMeter({ value, threshold }: { value: number | null; threshold: number | null }) {
   if (value == null) return <p className="text-xs text-zinc-500">模型沒有給信心分數</p>;
-  const level = value >= 0.85 ? "高" : value >= 0.6 ? "中" : "低";
+  const level = CONFIDENCE_LEVELS.find(([min]) => value >= min)?.[1] ?? "低";
   return (
     <div>
       <div className="mb-1 flex items-baseline justify-between text-xs">
