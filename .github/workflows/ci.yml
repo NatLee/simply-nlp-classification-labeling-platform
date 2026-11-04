@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API (Rust)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/api
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src/api
+      - name: Format
+        run: cargo fmt --check
+      - name: Lint
+        run: cargo clippy --all-targets --locked -- -D warnings
+      - name: Test (unit + integration, AI providers are local fake servers)
+        run: cargo test --locked
+
+  web:
+    name: Web (React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: src/web/package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/web/pnpm-lock.yaml
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Test
+        run: pnpm test
+      - name: Type-check and build
+        run: pnpm build
+
+  docker:
+    name: Docker image
+    needs: [api, web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: simply-nlp-labeling:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test
+        run: |
+          docker run -d --name app -p 5000:5000 simply-nlp-labeling:ci
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:5000/api/health && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:5000/api/meta | tee meta.json
+          grep -q '"enabled":false' meta.json
+          curl -fsS http://127.0.0.1:5000/ | grep -q '<div id="root">'
+          # 建一個舊版相容的專案，匯入 README 裡用的範例 CSV
+          id=$(curl -fsS -H 'Content-Type: application/json' -d '{"name":"ci","templateId":"legacy-emotion"}' \
+            http://127.0.0.1:5000/api/projects | jq -r .id)
+          curl -fsS -F file=@examples/labelDataExample.csv "http://127.0.0.1:5000/api/projects/$id/import" | tee import.json
+          grep -q '"created":4' import.json
+          curl -fsS "http://127.0.0.1:5000/api/projects/$id/export?format=csv&mode=items" | tee export.csv
+          grep -q '公車又誤點' export.csv
+          docker exec app simply-nlp-labeling --help
+          docker logs app
+      - name: Smoke test with login turned on
+        run: |
+          docker run -d --name secure -p 5001:5000 -e ADMIN_PASSWORD=ci-admin-password simply-nlp-labeling:ci
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:5001/api/health && break
+            sleep 1
+          done
+          # 沒登入：API 回 401，前端照樣載入（會顯示登入頁）
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:5001/api/projects)" = 401
+          curl -fsS http://127.0.0.1:5001/ | grep -q '<div id="root">'
+          # 登入、建專案、匯入、標注一筆、登出
+          curl -fsS -c jar -H 'Content-Type: application/json' -d '{"username":"admin","password":"ci-admin-password"}' http://127.0.0.1:5001/api/auth/login | tee me.json
+          annotator=$(jq -r .user.annotatorId me.json)
+          id=$(curl -fsS -b jar -H 'Content-Type: application/json' -d '{"name":"ci","templateId":"legacy-emotion"}' http://127.0.0.1:5001/api/projects | jq -r .id)
+          curl -fsS -b jar -F file=@examples/textDataExample.csv "http://127.0.0.1:5001/api/projects/$id/import"
+          item=$(curl -fsS -b jar "http://127.0.0.1:5001/api/projects/$id/next?annotator=$annotator" | jq -r .itemId)
+          curl -fsS -b jar -X PUT -H 'Content-Type: application/json' -d "{\"annotatorId\":$annotator,\"values\":{\"score\":4,\"tag\":\"happy\"}}" "http://127.0.0.1:5001/api/items/$item/annotation"
+          # 跨站寫入被擋
+          test "$(curl -s -o /dev/null -w '%{http_code}' -b jar -H 'Origin: https://evil.example' -X DELETE http://127.0.0.1:5001/api/projects/$id)" = 403
+          curl -fsS -b jar -c jar -X POST http://127.0.0.1:5001/api/auth/logout
+          test "$(curl -s -o /dev/null -w '%{http_code}' -b jar http://127.0.0.1:5001/api/projects)" = 401

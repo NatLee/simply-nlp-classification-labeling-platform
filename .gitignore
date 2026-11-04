@@ -1,15 +1,21 @@
+# Rust build output
+src/api/target/
 
+# Web
+node_modules/
+.pnpm-store/
+src/web/dist/
+*.tsbuildinfo
+
+# Runtime data: SQLite database, uploaded media
+data/
+src/api/data/
+*.db
+*.db-shm
+*.db-wal
+
+# Local settings
+.env
 .DS_Store
 desktop.ini
-
-__pycache__
-.vscode
-
-*.db
-*.db-journal
-
-userUpload
-
-textDataExample.csv
-labelDataExample.csv
-
+.vscode/

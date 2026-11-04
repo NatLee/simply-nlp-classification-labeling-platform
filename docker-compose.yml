@@ -1,0 +1,32 @@
+services:
+  labeling:
+    build: .
+    image: simply-nlp-labeling:latest
+    container_name: simply-nlp-labeling
+    restart: unless-stopped
+    ports:
+      - "${LABEL_PORT:-5000}:5000"
+    extra_hosts:
+      # 讓容器用 host.docker.internal 連到本機的 Ollama 等服務（Linux 需要這行，Docker Desktop 本來就有）
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # SQLite 資料庫和上傳的圖片、音訊都在這裡，請記得備份
+      - labeling-data:/app/data
+    environment:
+      # 內建登入（選用）。設了 ADMIN_PASSWORD 才會要求登入，見 README「登入」。
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      # 外部看到的網址；是 https 時 session cookie 會加 Secure
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
+      # AI 輔助標注（選用）。沒設定時 AI 功能關閉，其他功能照常。
+      # 值寫在同一個資料夾的 .env（不會進 git），見 README「AI 輔助標注」。
+      LLM_PROVIDER: ${LLM_PROVIDER:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+
+volumes:
+  labeling-data:

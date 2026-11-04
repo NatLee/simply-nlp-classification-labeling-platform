@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+/* 深色模式跟著 <html class="dark">，可以手動切換，也可以跟系統 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * 設計 token。Simply Labeling 系列的兩個平台共用同一套版面和元件，
+ * 只換主色：這個平台（分類標注）是 teal，閱讀理解標注平台是 violet。
+ * 要換主色只改 --color-brand-*。
+ */
+@theme {
+  --font-sans: "Inter Variable", "Noto Sans TC Variable", "PingFang TC", "Microsoft JhengHei", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --color-brand-50: var(--color-teal-50);
+  --color-brand-100: var(--color-teal-100);
+  --color-brand-200: var(--color-teal-200);
+  --color-brand-300: var(--color-teal-300);
+  --color-brand-400: var(--color-teal-400);
+  --color-brand-500: var(--color-teal-500);
+  --color-brand-600: var(--color-teal-600);
+  --color-brand-700: var(--color-teal-700);
+  --color-brand-800: var(--color-teal-800);
+  --color-brand-900: var(--color-teal-900);
+  --color-brand-950: var(--color-teal-950);
+
+  /* AI 建議的強調色，兩個平台一樣，和主色分開 */
+  --color-ai-50: var(--color-amber-50);
+  --color-ai-100: var(--color-amber-100);
+  --color-ai-200: var(--color-amber-200);
+  --color-ai-400: var(--color-amber-400);
+  --color-ai-500: var(--color-amber-500);
+  --color-ai-600: var(--color-amber-600);
+  --color-ai-700: var(--color-amber-700);
+  --color-ai-900: var(--color-amber-900);
+  --color-ai-950: var(--color-amber-950);
+
+  --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px -12px rgb(15 23 42 / 0.12);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100;
+    font-feature-settings: "cv11", "ss01";
+  }
+  ::selection {
+    @apply bg-brand-200 text-brand-950 dark:bg-brand-800 dark:text-brand-50;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-zinc-200/80 bg-white shadow-soft dark:border-zinc-800 dark:bg-zinc-900;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-brand-600 text-white shadow-sm hover:bg-brand-700 dark:bg-brand-500 dark:text-zinc-950 dark:hover:bg-brand-400;
+  }
+  .btn-secondary {
+    @apply border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800;
+  }
+  .btn-ghost {
+    @apply text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800;
+  }
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-400;
+  }
+  .input {
+    @apply w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25 focus:outline-none disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300;
+  }
+  .hint {
+    @apply mt-1 text-xs text-zinc-500 dark:text-zinc-400;
+  }
+  .kbd {
+    @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-zinc-300 bg-zinc-50 px-1 font-mono text-[11px] leading-none text-zinc-500 shadow-[inset_0_-1px_0] shadow-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:shadow-zinc-700;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium;
+  }
+  .th {
+    @apply px-3 py-2 text-left text-xs font-semibold tracking-wide text-zinc-500 dark:text-zinc-400;
+  }
+  .td {
+    @apply px-3 py-2.5 align-middle text-sm;
+  }
+  .section-title {
+    @apply text-xs font-semibold tracking-wider text-zinc-400 uppercase dark:text-zinc-500;
+  }
+}
+
+/* 分數滑桿 */
+input[type="range"].slider {
+  @apply h-2 w-full cursor-pointer appearance-none rounded-full bg-zinc-200 dark:bg-zinc-700;
+  background-image: linear-gradient(var(--color-brand-500), var(--color-brand-500));
+  background-size: var(--fill, 50%) 100%;
+  background-repeat: no-repeat;
+}
+input[type="range"].slider::-webkit-slider-thumb {
+  @apply size-5 appearance-none rounded-full border-2 border-white bg-brand-600 shadow-md transition dark:border-zinc-900 dark:bg-brand-400;
+}
+input[type="range"].slider::-moz-range-thumb {
+  @apply size-5 rounded-full border-2 border-white bg-brand-600 shadow-md dark:border-zinc-900 dark:bg-brand-400;
+}
+input[type="range"].slider:focus-visible {
+  @apply outline-2 outline-offset-4 outline-brand-500;
+}
