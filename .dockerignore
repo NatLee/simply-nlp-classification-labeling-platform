@@ -1,0 +1,11 @@
+.git
+.github
+docs
+data
+**/node_modules
+**/.pnpm-store
+**/dist
+**/target
+*.db
+*.db-*
+.env

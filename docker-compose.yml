@@ -1,0 +1,23 @@
+services:
+  labeling:
+    build: .
+    image: simply-nlp-labeling:latest
+    container_name: simply-nlp-labeling
+    restart: unless-stopped
+    ports:
+      - "${LABEL_PORT:-5000}:5000"
+    volumes:
+      # SQLite 資料庫和上傳的圖片、音訊都在這裡，請記得備份
+      - labeling-data:/app/data
+    environment:
+      # AI 輔助標注（選用）。沒設定時 AI 功能關閉，其他功能照常。
+      # 值寫在同一個資料夾的 .env（不會進 git），見 README「AI 輔助標注」。
+      LLM_PROVIDER: ${LLM_PROVIDER:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+
+volumes:
+  labeling-data:
