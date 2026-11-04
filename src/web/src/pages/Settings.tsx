@@ -181,7 +181,8 @@ function FieldEditor({
 
 export function SettingsPage() {
   const { project, setProject } = useProject();
-  const { toast } = useSession();
+  const { toast, can } = useSession();
+  const editable = can("admin");
   const showError = useErrorToast();
   const navigate = useNavigate();
   const [name, setName] = useState(project.name);
@@ -235,7 +236,7 @@ export function SettingsPage() {
         title="專案設定"
         subtitle="改標注結構時，已經有的標注要仍然合法：可以新增欄位和選項、改名稱；拿掉用過的選項會被擋下。"
         actions={
-          <button className="btn btn-primary" onClick={save} disabled={busy}>
+          <button className="btn btn-primary" onClick={save} disabled={busy || !editable} title={editable ? undefined : "只有管理員可以改專案設定"}>
             {busy ? <Spinner /> : <Save className="size-4" />}
             儲存
           </button>
@@ -362,6 +363,7 @@ export function SettingsPage() {
           </div>
         </section>
 
+        {editable && (
         <section className="rounded-2xl border border-red-200 p-5 dark:border-red-900/60">
           <h2 className="text-base font-semibold text-red-700 dark:text-red-400">刪除專案</h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">資料、標注和 AI 建議都會刪掉，沒辦法復原。要刪的話，先輸入專案名稱。</p>
@@ -373,6 +375,7 @@ export function SettingsPage() {
             </button>
           </div>
         </section>
+        )}
       </div>
     </div>
   );

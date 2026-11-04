@@ -272,16 +272,21 @@ function BatchCard() {
 
 export function DataPage() {
   const { project } = useProject();
+  const { can } = useSession();
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
       <PageHeader title="匯入匯出" subtitle={project.name} />
-      <div className="grid gap-5 lg:grid-cols-2">
-        <div className="space-y-5">
-          <ImportCard />
-          <BatchCard />
+      {!can("review") ? (
+        <p className="card p-5 text-sm text-zinc-500 dark:text-zinc-400">匯入匯出要審核者或管理員的帳號。</p>
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-2">
+          <div className="space-y-5">
+            {can("admin") && <ImportCard />}
+            <BatchCard />
+          </div>
+          <ExportCard />
         </div>
-        <ExportCard />
-      </div>
+      )}
     </div>
   );
 }

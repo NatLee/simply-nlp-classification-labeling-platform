@@ -7,7 +7,7 @@ import { useErrorToast, useSession } from "../lib/session";
 import type { Annotator } from "../types";
 
 function Row({ a }: { a: Annotator }) {
-  const { annotator, setAnnotatorId, reloadAnnotators, toast } = useSession();
+  const { annotator, setAnnotatorId, reloadAnnotators, toast, can, canPickAnnotator } = useSession();
   const showError = useErrorToast();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(a.name);
@@ -68,9 +68,9 @@ function Row({ a }: { a: Annotator }) {
           </>
         )}
       </div>
-      {!isAi && !editing && (
+      {!isAi && !editing && can("admin") && (
         <div className="flex gap-1">
-          {annotator?.id !== a.id && (
+          {annotator?.id !== a.id && canPickAnnotator && (
             <button className="btn btn-secondary text-xs" onClick={() => setAnnotatorId(a.id)}>
               切換成這個人
             </button>
@@ -88,7 +88,7 @@ function Row({ a }: { a: Annotator }) {
 }
 
 export function AnnotatorsPage() {
-  const { annotators, reloadAnnotators, setAnnotatorId } = useSession();
+  const { annotators, reloadAnnotators, setAnnotatorId, auth, can } = useSession();
   const showError = useErrorToast();
   const [name, setName] = useState("");
 
@@ -106,7 +106,15 @@ export function AnnotatorsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-8">
-      <PageHeader title="標注者" subtitle="每個人的標注分開記錄。這裡沒有密碼，選誰就以誰的身分標注；請放在信任的網路裡使用。" />
+      <PageHeader
+        title="標注者"
+        subtitle={
+          auth?.enabled
+            ? "每個帳號就是一位標注者，登入後只能用自己的身分標注。新增帳號請到「帳號管理」。"
+            : "每個人的標注分開記錄。沒有啟用登入時，選誰就以誰的身分標注；請放在信任的網路裡使用。"
+        }
+      />
+      {can("admin") && (
       <form onSubmit={create} className="card mb-5 flex gap-2 p-4">
         <input className="input" placeholder="新的標注者名字" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} aria-label="新的標注者名字" />
         <button className="btn btn-primary" disabled={!name.trim()}>
@@ -114,6 +122,7 @@ export function AnnotatorsPage() {
           新增
         </button>
       </form>
+      )}
       <ul className="card divide-y divide-zinc-100 dark:divide-zinc-800">
         {annotators.length === 0 && <li className="px-4 py-6 text-center text-sm text-zinc-500">還沒有標注者</li>}
         {annotators.map((a) => (

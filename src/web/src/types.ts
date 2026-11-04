@@ -92,7 +92,21 @@ export type Annotator = { id: number; name: string; kind: "human" | "ai"; create
 
 export type AiStatus = { enabled: true; provider: string; model: string } | { enabled: false; reason?: string | null };
 
-export type Meta = { version: string; ai: AiStatus; maxUploadMb: number };
+export type Meta = { version: string; ai: AiStatus; maxUploadMb: number; auth: { enabled: boolean } };
+
+/** 內建登入的角色：annotator 標注；reviewer 再加上匯出、隱藏資料、批次預標；admin 全部。 */
+export type Role = "annotator" | "reviewer" | "admin";
+export type AuthUser = { id: number; username: string; role: Role; annotatorId: number };
+export type AuthState = { enabled: boolean; user: AuthUser | null };
+export type Account = {
+  id: number;
+  username: string;
+  role: Role;
+  disabled: boolean;
+  createdAt: number;
+  lastLoginAt: number | null;
+  annotatorId: number | null;
+};
 
 export type ItemFilter = "all" | "unlabeled" | "labeled" | "mine" | "pending" | "hidden";
 

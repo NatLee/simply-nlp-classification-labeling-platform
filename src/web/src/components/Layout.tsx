@@ -3,6 +3,8 @@ import {
   ChartColumn,
   ChevronsUpDown,
   FolderKanban,
+  KeyRound,
+  LogOut,
   Menu,
   Monitor,
   Moon,
@@ -18,7 +20,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useMatch } from "react-router";
 import { api } from "../api";
 import { useAsync } from "../lib/hooks";
-import { useSession, type ThemeChoice } from "../lib/session";
+import { ROLE_LABELS, useErrorToast, useSession, type ThemeChoice } from "../lib/session";
 import { AnnotatorPicker } from "./AnnotatorPicker";
 import { Modal, Toaster } from "./ui";
 
@@ -127,7 +129,8 @@ function Initials({ name }: { name: string }) {
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const match = useMatch("/p/:projectId/*");
   const projectId = match ? Number(match.params.projectId) : null;
-  const { meta, annotator } = useSession();
+  const { meta, annotator, auth, can, canPickAnnotator, logout } = useSession();
+  const showError = useErrorToast();
   const [picking, setPicking] = useState(false);
   const ai = meta?.ai;
   return (
@@ -175,6 +178,11 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <NavItem to="/annotators" icon={<Users />}>
           標注者
         </NavItem>
+        {auth?.enabled && can("admin") && (
+          <NavItem to="/accounts" icon={<KeyRound />}>
+            帳號管理
+          </NavItem>
+        )}
       </div>
 
       <div className="mt-auto space-y-3">
@@ -193,16 +201,31 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setPicking(true)}
-          className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
-        >
-          {annotator ? <Initials name={annotator.name} /> : <span className="size-7 rounded-full border border-dashed border-zinc-300" />}
-          <span className="min-w-0 flex-1">
-            <span className="block text-xs text-zinc-500 dark:text-zinc-400">目前的標注者</span>
-            <span className="block truncate text-sm font-medium">{annotator?.name ?? "還沒選擇"}</span>
-          </span>
-        </button>
+        {canPickAnnotator ? (
+          <button
+            onClick={() => setPicking(true)}
+            className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
+          >
+            {annotator ? <Initials name={annotator.name} /> : <span className="size-7 rounded-full border border-dashed border-zinc-300" />}
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs text-zinc-500 dark:text-zinc-400">目前的標注者</span>
+              <span className="block truncate text-sm font-medium">{annotator?.name ?? "還沒選擇"}</span>
+            </span>
+          </button>
+        ) : (
+          auth?.user && (
+            <div className="flex items-center gap-2.5 px-2 py-1.5">
+              <Initials name={auth.user.username} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">{auth.user.username}</span>
+                <span className="block text-xs text-zinc-500 dark:text-zinc-400">{ROLE_LABELS[auth.user.role]}</span>
+              </span>
+              <button className="btn btn-ghost px-2" onClick={() => logout().catch(showError)} aria-label="登出" title="登出">
+                <LogOut className="size-4" />
+              </button>
+            </div>
+          )
+        )}
         <ThemeSwitch />
         <p className="px-2 text-[11px] text-zinc-400">v{meta?.version ?? "…"}</p>
       </div>

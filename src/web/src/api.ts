@@ -16,6 +16,9 @@ import type {
   Template,
   Values,
   AiStatus,
+  Account,
+  AuthState,
+  Role,
 } from "./types";
 
 /** API 錯誤：`message` 是後端的 `error`，`details` 是逐項的問題（例如每一列的匯入錯誤）。 */
@@ -29,6 +32,9 @@ export class ApiError extends Error {
   }
 }
 
+/** 任何 API 回 401 時發出的事件。 */
+export const UNAUTHORIZED_EVENT = "snl:unauthorized";
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const init: RequestInit = { method, headers: {} };
   if (body instanceof FormData) {
@@ -38,6 +44,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     (init.headers as Record<string, string>)["Content-Type"] = "application/json";
   }
   const res = await fetch(`/api${path}`, init);
+  // session 過期或被管理員停用：通知畫面回到登入頁
+  if (res.status === 401 && !path.startsWith("/auth/")) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
   if (res.status === 204) return undefined as T;
   const text = await res.text();
   const data = text ? JSON.parse(text) : undefined;
@@ -103,6 +111,13 @@ export const api = {
   startBatch: (id: number, limit: number, threshold: number | null) =>
     post<JobStatus>(`/projects/${id}/ai/batch`, { limit, threshold }),
   cancelBatch: (id: number) => del(`/projects/${id}/ai/batch`),
+
+  authState: () => get<AuthState>("/auth/me"),
+  login: (username: string, password: string) => post<AuthState>("/auth/login", { username, password }),
+  logout: () => post<void>("/auth/logout"),
+  accounts: () => get<Account[]>("/users"),
+  createAccount: (body: { username: string; password: string; role: Role }) => post<Account>("/users", body),
+  updateAccount: (id: number, body: { role?: Role; disabled?: boolean; password?: string }) => put<Account>(`/users/${id}`, body),
 
   annotators: () => get<Annotator[]>("/annotators"),
   createAnnotator: (name: string) => post<Annotator>("/annotators", { name }),

@@ -178,3 +178,50 @@ describe("匯入", () => {
     expect((sent.get("file") as File).name).toBe("textDataExample.csv");
   });
 });
+
+describe("內建登入", () => {
+  it("登入、以自己的身分標注、登出", async () => {
+    const amy = { id: 1, username: "amy", role: "annotator", annotatorId: 7 };
+    let signedIn = false;
+    const { calls } = fakeApi({
+      "GET /meta": { ...metaOff, auth: { enabled: true } },
+      "GET /auth/me": () => ({ enabled: true, user: signedIn ? amy : null }),
+      "POST /auth/login": (c: Call) => {
+        const b = c.body as { username: string; password: string };
+        if (b.password !== "amy-password") return error(401, "帳號或密碼不對，或帳號已停用");
+        signedIn = true;
+        return { enabled: true, user: amy };
+      },
+      "POST /auth/logout": () => {
+        signedIn = false;
+        return undefined;
+      },
+      "GET /annotators": annotators,
+      "GET /projects": [project()],
+      "GET /projects/1": project(),
+      "GET /projects/1/stats": stats,
+      "GET /projects/1/next": { itemId: 11 },
+      "GET /items/11": detail(11, "登入後的第一句"),
+      "PUT /items/11/annotation": { id: 1 },
+    });
+    // 啟用登入時，存在瀏覽器的標注者選擇不算數
+    localStorage.setItem("snl.annotator", "99");
+    const user = userEvent.setup();
+    renderAt("/p/1");
+    await user.type(await screen.findByLabelText("帳號"), "amy");
+    await user.type(screen.getByLabelText("密碼"), "wrong-password");
+    await user.click(screen.getByRole("button", { name: "登入" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("帳號或密碼不對");
+    await user.type(screen.getByLabelText("密碼"), "amy-password");
+    await user.click(screen.getByRole("button", { name: "登入" }));
+    expect(await screen.findByText("登入後的第一句")).toBeInTheDocument();
+    // 管理員才看得到的「帳號管理」不會出現
+    expect(screen.queryByText("帳號管理")).not.toBeInTheDocument();
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(puts(calls)).toHaveLength(1));
+    expect((puts(calls)[0].body as { annotatorId: number }).annotatorId).toBe(7);
+    await user.click(screen.getAllByRole("button", { name: "登出" })[0]);
+    expect(await screen.findByLabelText("帳號")).toBeInTheDocument();
+    expect(calls.some((c) => c.method === "POST" && c.path === "/auth/logout")).toBe(true);
+  });
+});

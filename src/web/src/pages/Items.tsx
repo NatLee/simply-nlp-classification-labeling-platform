@@ -21,7 +21,7 @@ const PER_PAGE = 50;
 
 export function ItemsPage() {
   const { project } = useProject();
-  const { annotator } = useSession();
+  const { annotator, can } = useSession();
   const showError = useErrorToast();
   const [filter, setFilter] = useState<ItemFilter>("all");
   const [query, setQuery] = useState("");
@@ -120,9 +120,11 @@ export function ItemsPage() {
                         <PenLine className="size-4" />
                         標注
                       </Link>
+                      {can("review") && (
                       <button className="btn btn-ghost px-2" onClick={() => toggleHidden(it.id, it.hidden)} title={it.hidden ? "顯示（放回標注佇列）" : "隱藏（不出現在標注佇列）"}>
                         {it.hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                       </button>
+                      )}
                     </td>
                   </tr>
                 ))}

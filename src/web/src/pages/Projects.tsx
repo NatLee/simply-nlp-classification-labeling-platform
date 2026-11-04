@@ -200,6 +200,7 @@ function LegacyImport({ open, onClose }: { open: boolean; onClose: () => void })
 
 export function ProjectsPage() {
   const { data: projects, loading } = useAsync(() => api.projects(), []);
+  const { can } = useSession();
   const [creating, setCreating] = useState(false);
   const [legacy, setLegacy] = useState(false);
   return (
@@ -208,6 +209,7 @@ export function ProjectsPage() {
         title="所有專案"
         subtitle="每個專案有自己的資料和標注結構。文字、圖片、文字加圖片都可以標。"
         actions={
+          can("admin") && (
           <>
             <button className="btn btn-secondary" onClick={() => setLegacy(true)}>
               <Database className="size-4" />
@@ -218,6 +220,7 @@ export function ProjectsPage() {
               新增專案
             </button>
           </>
+          )
         }
       />
       {loading && !projects ? (
@@ -234,11 +237,13 @@ export function ProjectsPage() {
         <div className="card">
           <EmptyState icon={<FolderPlus className="size-6" />} title="還沒有專案">
             建一個專案，選好標注結構，再匯入要標的資料。用過舊版的話，也可以直接匯入舊的 emoLabel.db。
-            <div className="mt-4 flex justify-center gap-2">
-              <button className="btn btn-primary" onClick={() => setCreating(true)}>
-                新增專案
-              </button>
-            </div>
+            {can("admin") && (
+              <div className="mt-4 flex justify-center gap-2">
+                <button className="btn btn-primary" onClick={() => setCreating(true)}>
+                  新增專案
+                </button>
+              </div>
+            )}
           </EmptyState>
         </div>
       )}
