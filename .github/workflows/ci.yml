@@ -90,7 +90,9 @@ jobs:
           docker logs app
       - name: Smoke test with login turned on
         run: |
-          docker run -d --name secure -p 5001:5000 -e ADMIN_PASSWORD=ci-admin-password simply-nlp-labeling:ci
+          # 每次用不同的隨機密碼，最後確認它沒有出現在 log 裡
+          password=$(openssl rand -hex 16)
+          docker run -d --name secure -p 5001:5000 -e ADMIN_PASSWORD="$password" simply-nlp-labeling:ci
           for i in $(seq 1 30); do
             curl -fsS http://127.0.0.1:5001/api/health && break
             sleep 1
@@ -99,7 +101,9 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:5001/api/projects)" = 401
           curl -fsS http://127.0.0.1:5001/ | grep -q '<div id="root">'
           # 登入、建專案、匯入、標注一筆、登出
-          curl -fsS -c jar -H 'Content-Type: application/json' -d '{"username":"admin","password":"ci-admin-password"}' http://127.0.0.1:5001/api/auth/login | tee me.json
+          curl -fsS -D headers.txt -c jar -H 'Content-Type: application/json' \
+            -d "{\"username\":\"admin\",\"password\":\"$password\"}" http://127.0.0.1:5001/api/auth/login | tee me.json
+          grep -i '^set-cookie: snl_session=' headers.txt | grep -q 'HttpOnly; SameSite=Lax'
           annotator=$(jq -r .user.annotatorId me.json)
           id=$(curl -fsS -b jar -H 'Content-Type: application/json' -d '{"name":"ci","templateId":"legacy-emotion"}' http://127.0.0.1:5001/api/projects | jq -r .id)
           curl -fsS -b jar -F file=@examples/textDataExample.csv "http://127.0.0.1:5001/api/projects/$id/import"
@@ -109,3 +113,5 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' -b jar -H 'Origin: https://evil.example' -X DELETE http://127.0.0.1:5001/api/projects/$id)" = 403
           curl -fsS -b jar -c jar -X POST http://127.0.0.1:5001/api/auth/logout
           test "$(curl -s -o /dev/null -w '%{http_code}' -b jar http://127.0.0.1:5001/api/projects)" = 401
+          docker logs secure > secure.log 2>&1
+          if grep -qF "$password" secure.log; then echo "admin password leaked into the log"; exit 1; fi
