@@ -63,8 +63,11 @@ impl AuthConfig {
         }
         let public_url = var("PUBLIC_URL");
         let public_origin = public_url.as_deref().map(origin_of).transpose()?;
-        let cookie_secure = match var("COOKIE_SECURE") {
-            Some(v) => matches!(v.to_lowercase().as_str(), "1" | "true" | "yes"),
+        // 和閱讀理解平台一樣只收 true／false，打錯字時啟動就報錯，不會悄悄關掉 Secure
+        let cookie_secure = match var("COOKIE_SECURE").map(|v| v.to_lowercase()) {
+            Some(v) if v == "true" => true,
+            Some(v) if v == "false" => false,
+            Some(other) => bail!("COOKIE_SECURE 只能是 true 或 false：{other}"),
             None => public_url.as_deref().is_some_and(|u| u.starts_with("https://")),
         };
         Ok(Some(Self {
@@ -348,6 +351,17 @@ mod tests {
         .unwrap();
         assert!(!a.cookie_secure, "COOKIE_SECURE overrides PUBLIC_URL");
         assert!(config(&[("ADMIN_PASSWORD", "12345678"), ("PUBLIC_URL", "label.example.com")]).is_err());
+        assert!(
+            config(&[("ADMIN_PASSWORD", "12345678"), ("COOKIE_SECURE", "TRUE")])
+                .unwrap()
+                .auth
+                .unwrap()
+                .cookie_secure
+        );
+        assert!(
+            config(&[("ADMIN_PASSWORD", "12345678"), ("COOKIE_SECURE", "yes")]).is_err(),
+            "typos fail at startup"
+        );
     }
 
     #[test]
